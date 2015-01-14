@@ -51,7 +51,12 @@ Ext.define('RM.component.RMAmountField', {
         return value;
     },
         
-    showDisplayValue: function(){        
+    showDisplayValue: function(){    
+        //Fix for the case where we see display element but not the value as we type in
+        //For details check task# 12023 in TFS
+        if(this.inputEl.id === document.activeElement.id){
+            return;
+        }
         // Display if we have a valid number to show
         if(this.displayVal){                   
             this.displayEl.show(); 
@@ -59,7 +64,7 @@ Ext.define('RM.component.RMAmountField', {
         // otherwise leave the input control visible and clear the display value
         else {
             this.displayEl.hide(); 
-        }                   
+        }  
     },
     
     showInputFld: function(){
@@ -136,7 +141,8 @@ Ext.define('RM.component.RMAmountField', {
     handleTrailingZeros: function(val) {
         // Make sure only the necessary number of trailing zeros is displayed
         var decimalIndex = val.indexOf('.');
-        if( decimalIndex !== -1 && this.getTrailingZerosUpTo() > 0) {
+        
+        if( decimalIndex !== -1 && this.getTrailingZerosUpTo() >= 0) {
             var goodFromHere = false;
             var minIndexFromEnd = this.getDecimalPlaces() - this.getTrailingZerosUpTo();
             
@@ -145,14 +151,14 @@ Ext.define('RM.component.RMAmountField', {
             val = val.split('').
             reverse().
             filter(function(item, index) {
-                if(index >= minIndexFromEnd || item !== '0') { 
+                if((index >= minIndexFromEnd || item !== '0') && item !== '.') { 
                     goodFromHere = true;
                     return true;
                 }
                 return goodFromHere;                
             }).
             reverse().
-            join('');
+            join('');            
         }
         else {
             val = val.replace(/([0-9]+)\.0+$/,'$1')

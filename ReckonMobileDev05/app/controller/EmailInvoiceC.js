@@ -1,13 +1,15 @@
 Ext.define('RM.controller.EmailInvoiceC', {
     extend: 'Ext.app.Controller',
-
     requires: ['RM.view.EmailInvoice'],
     config: {
         refs: {
             emailInvoice: 'emailinvoice',
             emailInvoiceForm: 'emailinvoice formpanel',
             email: 'emailinvoice emailfield[name=Email]',
+            cc: 'emailinvoice emailfield[name=CC]',
+            bcc: 'emailinvoice emailfield[name=BCC]',
             subject: 'emailinvoice textfield[name=Subject]',
+            message: 'emailinvoice #emailForm textareafield',
             sentCont: 'emailinvoice #sentcont',
             errorCont: 'emailinvoice #errorcont',
             templateFld: 'emailinvoice selectfield[name=InvoiceTemplateId]'
@@ -22,7 +24,7 @@ Ext.define('RM.controller.EmailInvoiceC', {
             },
             'emailinvoice #send': {
                 tap: 'onSend'
-            },
+            },            
             'emailinvoice #continue': {
                 tap: 'onContinue'
             },
@@ -31,9 +33,11 @@ Ext.define('RM.controller.EmailInvoiceC', {
             },
             'emailinvoice #cancel': {
                 tap: 'onCancel'
+            },
+            'emailinvoice #emailForm textareafield':{
+                tap: 'showMessage'
             }
         }
-
     },
 
     showView: function (cb, cbs, invoiceData, msgType) {
@@ -41,7 +45,7 @@ Ext.define('RM.controller.EmailInvoiceC', {
         this.goCbs = cbs;
         this.invoiceData = invoiceData;
         this.msgType = msgType;
-        
+        this.messageText = '';
         RM.ViewMgr.regFormBackHandler(this.back, this);
         
         var view = this.getEmailInvoice();
@@ -50,32 +54,27 @@ Ext.define('RM.controller.EmailInvoiceC', {
         }
         else {
             view = { xtype: 'emailinvoice' };
-        }
-        
-        
-        RM.ViewMgr.showPanel(view);
-        
-         
+        }       
+        RM.ViewMgr.showPanel(view);       
     },
 
     
     onShow: function(){
-        var emailInvoiceForm = this.getEmailInvoiceForm();
-                
+        if(this.messageText) return;
+        var emailInvoiceForm = this.getEmailInvoiceForm();                
         emailInvoiceForm.reset();
         RM.ViewMgr.regFormBackHandler(this.back, this);
         
         RM.AppMgr.getServerRec('InvoiceMessagesTemplates', {InvoiceId: this.invoiceData.InvoiceId}, 
             function(rec){
-                emailInvoiceForm.setValues({Email: this.invoiceData.CustomerEmail, Subject: rec.Subject, Body: rec.Body });
+                emailInvoiceForm.setValues({Email: this.invoiceData.CustomerEmail, CC: rec.CC, BCC: rec.BCC, Subject: rec.Subject, Body: rec.Body });
                 this.loadTemplates();
             },
             this,
             this.goBack,
             null,
             this.goBack
-        );         
-      
+        );        
     },
     
     onHide: function(){
@@ -97,9 +96,25 @@ Ext.define('RM.controller.EmailInvoiceC', {
             this.goBack,
             null,
             this.goBack
-        );
-        
+        );        
     }, 
+    
+    showMessage: function(){
+        var message = this.getMessage().getValue();
+        var label = this.getMessage().getLabel();
+        RM.Selectors.showNoteText(
+            label,
+            true,
+            'Done',
+            message,
+            function(messageText){
+                this.messageText = messageText;
+                this.getMessage().setValue(messageText);
+                RM.ViewMgr.back();                
+            },
+            this
+        );        
+    },
     
     validateForm: function(vals) {        
         var isValid = true; 
@@ -119,19 +134,54 @@ Ext.define('RM.controller.EmailInvoiceC', {
         if (vals.Email == '') {
             this.getEmail().showValidation(false);
             isValid = false;
+        }        
+         
+        if (!RM.AppMgr.validateEmail(vals.Email)) {             
+            this.getEmail().showValidation(false);
+            isValid = false;
+            RM.AppMgr.showInvalidEmailMsg();
+            return isValid;
+        }
+        
+        if(this.checkForMultipleEmailAddresses(vals.Email)){
+            this.getEmail().showValidation(false);
+            isValid = false;
+            RM.AppMgr.showNoMultipleEmailMsg();
+            return isValid;
+        }
+        
+        if (vals.CC && !RM.AppMgr.validateEmail(vals.CC)) {             
+            this.getCc().showValidation(false);
+            isValid = false;
+            RM.AppMgr.showInvalidEmailMsg();
+            return isValid;
+        }
+        
+        if(this.checkForMultipleEmailAddresses(vals.CC)){
+            this.getCc().showValidation(false);
+            isValid = false;
+            RM.AppMgr.showNoMultipleEmailMsg();
+            return isValid;
+        }
+        
+        if (vals.BCC && !RM.AppMgr.validateEmail(vals.BCC)) {             
+            this.getBcc().showValidation(false);
+            isValid = false;
+            RM.AppMgr.showInvalidEmailMsg();
+            return isValid;
+        }
+        
+        if(this.checkForMultipleEmailAddresses(vals.BCC)){
+            this.getBcc().showValidation(false);
+            isValid = false;
+            RM.AppMgr.showNoMultipleEmailMsg();
+            return isValid;
         }
          
         if (vals.Subject == '') {
             this.getSubject().showValidation(false);
             isValid = false;
             RM.AppMgr.showInvalidFormMsg();
-            return isValid;
-        }
-         
-        if (!RM.AppMgr.validateEmail(vals.Email)) {             
-            this.getEmail().showValidation(false);
-            isValid = false;
-            RM.AppMgr.showInvalidEmailMsg();
             return isValid;
         }
         
@@ -141,6 +191,12 @@ Ext.define('RM.controller.EmailInvoiceC', {
          
         return isValid;
     },  
+    
+    checkForMultipleEmailAddresses: function(fieldVal){
+        if(fieldVal.indexOf(',') !== -1 || fieldVal.indexOf(';') !== -1 || fieldVal.indexOf(' ') >= 1){
+            return true;
+        }            
+    },
     
     onSend: function () {
         var vals = this.getEmailInvoiceForm().getValues();
@@ -196,8 +252,6 @@ Ext.define('RM.controller.EmailInvoiceC', {
                       }
                   },
                   this
-                );
-        
+                );        
     }
-
 });

@@ -1,7 +1,7 @@
 Ext.define('RM.view.EmailInvoice', {
 	extend: 'Ext.Panel',
 	xtype: 'emailinvoice',
-	requires: ['RM.component.ExtEmailField','RM.component.SecureFormPanel'],
+	requires: ['RM.component.ExtEmailField','RM.component.ExtTextAreaField','RM.component.SecureFormPanel'],
 	config: {
 		
 		layout: 'card',
@@ -35,17 +35,34 @@ Ext.define('RM.view.EmailInvoice', {
 						]						
 					},{
 						xtype: 'secureformpanel',
+                        itemId: 'emailForm',
 						padding: 0,
 						items: [
 							{
 								xtype: 'extemailfield',
 								name: 'Email',
-								label: 'Email',
+								label: 'To',
 								cls: 'rm-flatfield',
 								clearIcon: false,
 								placeHolder: 'enter',
                                 rmmandatory: true,
-                                labelWidth: '5em'                                
+                                labelWidth: '3em'                                
+							},{
+								xtype: 'extemailfield',
+								name: 'CC',
+								label: 'Cc',
+								cls: 'rm-flatfield',
+								clearIcon: false,
+								placeHolder: 'enter',
+                                labelWidth: '3em'                                
+							},{
+								xtype: 'extemailfield',
+								name: 'BCC',
+								label: 'Bcc',
+								cls: 'rm-flatfield',
+								clearIcon: false,
+								placeHolder: 'enter',
+                                labelWidth: '3em'                                
 							},{
 								xtype: 'exttextfield',
 								name: 'Subject',
@@ -68,24 +85,22 @@ Ext.define('RM.view.EmailInvoice', {
 								ui: 'plain',
                                 permissionFor: { name:'SalesPreferences', action:'View' }
 							}, {
-								xtype: 'textareafield',
+								xtype: 'exttextareafield',
                                 maxRows: 8,
 								name: 'Body',
 								label: 'Custom message',								
 								labelAlign: 'top',
 								cls: 'rm-flatfield rm-inputel-alignl',
 								clearIcon: false,
+                                readOnly: true,
 								placeHolder: 'enter',
                                 border: '1 0 1 0',
                                 style: 'border-color: #DBDBDB; border-style: solid;',
-                                listeners: {    
-                                    focus: function(field) {                                        
-                                        var numOfRows = field.getValue().split("\n").length;                                       
-                                        field.setMaxRows(numOfRows+2);
-                                    },
-                                    keyup: function(field) {
-                                        var numOfRows = field.getValue().split("\n").length;                                          
-                                        field.setMaxRows(numOfRows+2);
+                                listeners: {                                   
+                                    change: function(field) {
+                                        //var numOfRows = field.getValue().split("\n").length;    
+                                        var numOfRows = field.getValue().split("\n").length + Math.round(field.getValue().length/40) + 5;
+                                        field.setMaxRows(numOfRows);
                                     }
                                 }
 							}

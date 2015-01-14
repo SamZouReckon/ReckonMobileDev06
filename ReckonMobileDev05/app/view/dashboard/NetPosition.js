@@ -22,15 +22,17 @@ Ext.define('RM.view.dashboard.NetPosition', {
             '<div class="rm-panelboard">'+
             '<table cellspacing="0" cellpadding="0" width="100%">'+
             '<tr>'+
-            '<td width="49%">'+
-            '<div class="rm-greendot rm-dashboardnetposition">Income: <span class="rm-netpositionamount">' + RM.AppMgr.formatCurrency(data.NetPositionIncome, 0, true) + '</span></div>'+
-            '<div class="rm-reddoticon rm-dashboardnetposition">Expense: <span class="rm-netpositionamount">' + RM.AppMgr.formatCurrency(data.NetPositionExpenses, 0, true) + '</span></div>'+
-            '</td>'+
-            '<td width="2%"><div class="rm-equalicon">=</div></td>'+
-            '<td width="49%"><div class="rm-totalamount">' + RM.AppMgr.formatCurrency(data.NetPositionIncome - data.NetPositionExpenses, 0, true) + '</div></td>'+
-            '<tr>'+
+            '<td width="48%">'+
+            '<div class="rm-dashboardnetposition">Income</div>'+            	
+        	'<div class="rm-netposition-income">' + RM.AppMgr.formatCurrency(data.NetPositionIncome, 2, true) + '</div>'+        	
+        	'<div class="rm-dashboardnetposition">Expenses</div>'+     
+            '<div class="rm-netposition-expenses">' + RM.AppMgr.formatCurrency(data.NetPositionExpenses, 2, true) + '</div>'+        	
+        	'</td>'+
+            '<td width="4%"><div class="rm-equalicon">=</div></td>'+
+            '<td width="48%"><div class="rm-totalamount">' + RM.AppMgr.formatCurrency(data.NetPositionIncome - data.NetPositionExpenses, 2, true) + '</div></td>'+
+            '</tr>'+
             '</table>'+
-            '</div>'        
+            '</div>' 
         );
 	}
 });
